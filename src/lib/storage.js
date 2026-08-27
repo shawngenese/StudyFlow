@@ -1,7 +1,6 @@
 import { newId } from './id'
 
 export const STORAGE_KEY = 'shawn-todos-v3'
-export const LEGACY_KEY = 'shawn-todos-v1'
 export const SCHEMA_VERSION = 3
 
 const INBOX = () => ({ id: 'inbox', name: 'Inbox' })
@@ -43,32 +42,6 @@ function normalizeFilter(f) {
     tagFilter: typeof f.tagFilter === 'string' ? f.tagFilter.slice(0, 30) : '',
     smart: allowedSmart.has(f.smart) ? f.smart : null,
     projectId: typeof f.projectId==='string' ? f.projectId.slice(0,40) : null,
-  }
-}
-
-function migrateLegacy(raw) {
-  try {
-    const parsed = JSON.parse(raw)
-    if (!Array.isArray(parsed)) return null
-    return {
-      ...blank(),
-      tasks: parsed.filter((t) => t && typeof t === 'object').map((t) => ({
-        id: t.id || newId(),
-        text: String(t.text || '').trim() || 'Task',
-        notes: '',
-        completed: Boolean(t.completed),
-        createdAt: Number.isFinite(t.createdAt) ? t.createdAt : Date.now(),
-        updatedAt: Number.isFinite(t.updatedAt) ? t.updatedAt : (Number.isFinite(t.createdAt) ? t.createdAt : Date.now()),
-        dueDate: null,
-        priority: 0,
-        tags: [],
-        projectId: 'inbox',
-        status: t.completed ? 'done' : 'todo',
-        subtasks: [],
-      })),
-    }
-  } catch {
-    return null
   }
 }
 
@@ -133,34 +106,6 @@ export function loadData() {
     }
   } catch {
     /* fall through */
-  }
-  // migrate from v2
-  try {
-    const raw2 = localStorage.getItem('shawn-todos-v2')
-    if (raw2) {
-      const parsed = JSON.parse(raw2)
-      if (parsed && Array.isArray(parsed.tasks)) {
-        const projects = (parsed.projects || []).map(normalizeProject).filter(Boolean)
-        const hasInbox = projects.some((p) => p.id === 'inbox')
-        return {
-          ...blank(),
-          ...parsed,
-          version: SCHEMA_VERSION,
-          projects: hasInbox ? projects : [INBOX(), ...projects],
-          savedFilters: Array.isArray(parsed.savedFilters) ? parsed.savedFilters.map(normalizeFilter).filter(Boolean) : [],
-          tasks: parsed.tasks.map(normalizeTask),
-        }
-      }
-    }
-  } catch { /* ignore */ }
-  try {
-    const legacy = localStorage.getItem(LEGACY_KEY)
-    if (legacy) {
-      const migrated = migrateLegacy(legacy)
-      if (migrated) return { ...blank(), ...migrated }
-    }
-  } catch {
-    /* ignore */
   }
   return blank()
 }

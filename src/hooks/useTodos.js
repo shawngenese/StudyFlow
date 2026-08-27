@@ -32,7 +32,7 @@ export function useTodos() {
 
   useEffect(() => {
     const onStorage = (e) => {
-      if ((e.key === 'shawn-todos-v3' || e.key==='shawn-todos-v2') && e.newValue) {
+      if (e.key === 'shawn-todos-v3' && e.newValue) {
         try {
           const parsed = JSON.parse(e.newValue)
           if (parsed) dispatch({ type: '__hydrate', data: parsed })
