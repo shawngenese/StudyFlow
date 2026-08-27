@@ -1,0 +1,10 @@
+{
+  "name": "StudyFlow",
+  "short_name": "StudyFlow",
+  "description": "Minimal dark premium student tasks, habits, focus and notes",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f1113",
+  "theme_color": "#0f1113",
+  "icons": [{ "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml" }]
+}
