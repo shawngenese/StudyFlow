@@ -110,6 +110,28 @@ export function loadData() {
   return blank()
 }
 
+export function normalizeImport(raw) {
+  if (!raw || typeof raw !== 'object' || Object.hasOwn(raw, '__proto__') || Object.hasOwn(raw, 'constructor')) return null
+  if (!Array.isArray(raw.tasks) || !Array.isArray(raw.projects)) return null
+  if (raw.tasks.length > 5000) return null
+  const base = blank()
+  const projects = raw.projects.map(normalizeProject).filter(Boolean)
+  const hasInbox = projects.some((p) => p.id === 'inbox')
+  try {
+    return {
+      ...base,
+      version: SCHEMA_VERSION,
+      projects: hasInbox ? projects : [INBOX(), ...projects],
+      savedFilters: Array.isArray(raw.savedFilters) ? raw.savedFilters.map(normalizeFilter).filter(Boolean).slice(0, 20) : [],
+      tasks: raw.tasks.filter((t) => t && typeof t === 'object').map(normalizeTask),
+      habits: Array.isArray(raw.habits) ? raw.habits.map(normalizeHabit).filter(Boolean) : [],
+      docs: Array.isArray(raw.docs) ? raw.docs.map(normalizeDoc).filter(Boolean) : [],
+      goals: Array.isArray(raw.goals) ? raw.goals.map(normalizeGoal).filter(Boolean) : [],
+      focusSessions: Array.isArray(raw.focusSessions) ? raw.focusSessions.filter((s) => s && typeof s === 'object' && Number.isFinite(s.startedAt)).slice(-200).map((s) => ({ taskId: s.taskId ? String(s.taskId) : null, duration: Number.isFinite(s.duration) ? s.duration : 0, startedAt: s.startedAt, completed: !!s.completed })).slice(-200) : [],
+    }
+  } catch { return null }
+}
+
 export function normalizeTask(t) {
   if (!t || typeof t !== 'object') t = {}
   if (Object.hasOwn(t, '__proto__') || Object.hasOwn(t, 'constructor')) t={}

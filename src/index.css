@@ -53,10 +53,11 @@
 /* ============================================================
    Base
    ============================================================ */
-* { box-sizing: border-box; }
+* { box-sizing: border-box; min-width: 0; }
 html { -webkit-text-size-adjust: 100%; overflow-x: hidden; }
-html, body { margin: 0; min-height: 100%; overflow-x: hidden; }
+html, body { margin: 0; min-height: 100%; overflow-x: hidden; -webkit-tap-highlight-color: transparent; }
 img, svg { max-width: 100%; }
+button, a { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
 body {
   font-family: var(--font);
   font-size: 14.5px;
@@ -696,10 +697,11 @@ h3 { font-size: 13.5px; font-weight: 650; }
   *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 }
 
-/* perf: content-visibility for long lists/tiles */
+/* perf: content-visibility for long lists/tiles - skip on mobile to avoid clip during drag */
 .todo-list { content-visibility: auto; contain-intrinsic-size: 1px 500px; }
 .bento-tile { content-visibility: auto; contain-intrinsic-size: 280px 320px; }
 .board-column-body { content-visibility: auto; contain-intrinsic-size: 1px 300px; }
+@media (max-width: 720px) { .bento-tile { content-visibility: visible; } }
 
 /* show delete affordance on touch devices */
 @media (hover: none) {
@@ -720,17 +722,19 @@ h3 { font-size: 13.5px; font-weight: 650; }
 }
 
 @media (max-width: 900px) {
-  .app-shell { padding: 12px; gap: 12px; }
-  .nav-toggle { display: inline-flex; }
+  .app-shell { padding: 8px; gap: 8px; overflow-x: hidden; }
+  .nav-toggle { display: inline-flex; align-items: center; justify-content: center; }
   .sidebar {
     position: fixed; top: 0; left: 0; bottom: 0; z-index: 80;
-    height: auto; width: min(300px, 84vw);
+    height: auto; height: 100dvh; width: min(320px, 86vw);
     background: var(--bg-panel);
-    transform: translateX(-105%);
-    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    transform: translateX(-108%);
+    transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow: var(--shadow-md);
-    padding-top: 48px;
+    padding-top: 52px;
+    padding-bottom: calc(16px + env(safe-area-inset-bottom));
     overflow-y: auto; -webkit-overflow-scrolling: touch;
+    border-radius: 0 16px 16px 0;
   }
   .sidebar.is-open { transform: translateX(0); }
   .sidebar-close {
@@ -744,90 +748,120 @@ h3 { font-size: 13.5px; font-weight: 650; }
     min-width: 44px; min-height: 44px;
   }
   .sidebar-close:hover { background: var(--bg-inset); color: var(--text); }
-  .theme-toggle { top: 14px; right: 14px; }
-  .main { padding: 62px 16px 88px; }
+  .theme-toggle { top: 10px; right: 10px; z-index: 59; }
+  .main { padding: 56px 12px 88px; min-width: 0; overflow-x: hidden; }
+  .sidebar-item { padding-right: 36px; }
   .todo-header h1 { font-size: 22px; }
 
-  /* touch targets - avoid iOS zoom by keeping inputs >=16px only on composer/search */
+  /* header tile wraps on mobile */
+  .tile-header { flex-wrap: wrap; gap: 10px !important; }
+  .tile-header > div:first-child { flex: 1 1 160px; min-width: 0; }
+  .tile-header .segmented { flex: 1 1 100%; overflow-x: auto; flex-wrap: nowrap; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+  .tile-header .segmented::-webkit-scrollbar { display: none; }
+
+  /* avoid iOS zoom: all text controls >=16px on touch */
   .todo-input, .toolbar-search input { font-size: 16px; }
-  .detail-field input, .detail-field select, .detail-tag-input, select { font-size: 14px; }
-  .todo-item { padding: 13px 12px 13px 6px; gap: 8px; }
+  .detail-field input, .detail-field select, .detail-tag-input, select,
+  .notes-sidebar input, .notes-sidebar select, .notes-main input, .notes-main textarea, .notes-main select { font-size: 16px; }
+  input, textarea, select { font-size: 16px; }
+  .todo-item { padding: 12px 10px 12px 6px; gap: 8px; min-width: 0; }
+  .todo-item-body { min-width: 0; }
   .todo-drag-handle { display: none; }
   .todo-actions { opacity: 1; }
-  .todo-icon-btn { padding: 9px; min-width: 36px; min-height: 36px; justify-content: center; }
-  .segmented button { padding: 8px 12px; min-height: 36px; }
-  .toolbar { gap: 8px 6px; }
-  .toolbar-search { flex: 1 1 160px; display: flex; min-width: 0; }
+  .todo-icon-btn { padding: 10px; min-width: 44px; min-height: 44px; justify-content: center; }
+  .segmented button { padding: 8px 12px; min-height: 40px; min-width: 44px; justify-content: center; }
+  .toolbar { gap: 8px; align-items: stretch; }
+  .toolbar-search { flex: 1 1 100%; display: flex; min-width: 0; }
   .toolbar-search input { flex: 1; width: auto; min-width: 0; }
-  .toolbar select { flex: 0 1 auto; min-width: 0; max-width: 50%; }
+  .toolbar select { flex: 1 1 140px; min-width: 120px; max-width: 50%; }
   .toolbar .segmented { flex-shrink: 0; }
   .segmented button .view-label { display: none; }
+  .toolbar details > div { right: 0; left: auto; max-width: calc(100vw - 24px); }
 
+  .notes-layout { flex-direction: column; }
+  .notes-sidebar { width: 100% !important; max-height: 260px !important; }
+  .notes-main { width: 100%; }
+  .sidebar-add-form input { font-size: 16px !important; width: 72px; }
   .board {
     grid-template-columns: repeat(3, minmax(240px, 1fr));
     overflow-x: auto;
     overflow-y: hidden;
-    padding-bottom: 10px;
+    padding-bottom: 12px;
     scroll-snap-type: x proximity;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: thin;
+    gap: 12px;
+    touch-action: pan-x pan-y;
   }
   .board-column { scroll-snap-align: start; min-width: 240px; }
+  .board-card { touch-action: manipulation; }
 
   .calendar { overflow-x: hidden; }
-  .calendar-cell { min-height: 58px; padding: 3px; min-width: 0; }
+  .calendar-cell { min-height: 64px; padding: 4px; min-width: 0; }
   .calendar-daynum { width: 18px; height: 18px; font-size: 10px; }
-  .calendar-task { font-size: 10px; padding: 2px 5px; min-width: 0; }
-  .calendar-more { display: none; }
+  .calendar-task { font-size: 10px; padding: 2px 5px; min-width: 0; max-width: 100%; }
+  .calendar-more { display: inline-flex; font-size: 10px; }
   .calendar-weekdays { font-size: 9.5px; padding: 8px 0 6px; }
 
   .todo-footer {
     position: fixed; bottom: 0; left: 0; right: 0;
     margin: 0; z-index: 40;
-    padding: 10px 18px calc(10px + env(safe-area-inset-bottom));
+    padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
     background: var(--bg-panel);
     border-top: 1px solid var(--border);
     box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.08);
   }
-  .task-area { padding-bottom: 64px; }
-  .toast-stack { bottom: 68px; width: calc(100vw - 24px); max-width: 420px; }
-  .toast { max-width: 100%; word-break: break-word; }
+  .task-area { padding-bottom: 96px; }
+  .toast-stack { bottom: 76px; width: calc(100vw - 16px); max-width: 400px; left: 50%; transform: translateX(-50%); }
+  .toast { max-width: 100%; word-break: break-word; font-size: 13px; }
+  .detail-panel { width: auto; max-height: none; }
 }
 
 @media (max-width: 600px) {
-  .todo-input-row { gap: 8px; }
-  .todo-input { padding: 12px 14px; min-width: 0; }
-  .todo-add-btn { padding: 0 16px; flex-shrink: 0; min-height: 44px; }
-  .toolbar { flex-wrap: wrap; }
-  .toolbar-spacer { display: none; }
-  .toolbar select { flex: 1 1 calc(50% - 4px); }
-  .board { gap: 10px; }
-  .detail-panel { padding: 16px; gap: 14px; }
-  .detail-grid { grid-template-columns: 1fr 1fr; }
+  .app-shell { padding: 6px; }
+  .main { padding: 52px 8px 84px; gap: 12px; }
+  .todo-input-row { gap: 8px; flex-wrap: nowrap; }
+  .todo-input { padding: 12px 14px; min-width: 0; font-size: 16px; }
+  .todo-add-btn { padding: 0 14px; flex-shrink: 0; min-height: 44px; font-size: 14px; }
+  .toolbar { flex-wrap: wrap; gap: 6px; padding: 10px 12px !important; }
+  .toolbar-search { flex: 1 1 100%; }
+  .toolbar select { flex: 1 1 calc(50% - 3px); min-width: 0; font-size: 14px; }
+  .toolbar .btn-ghost { min-height: 36px; }
+  .board { gap: 10px; grid-template-columns: 1fr; overflow: visible; }
+  .board-column { min-width: 0; scroll-snap-align: none; }
+  .board-column-body { min-height: 48px; }
+  .detail-panel { padding: 16px; gap: 14px; border-radius: 16px; }
+  .detail-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .detail-notes-input { min-height: 100px; }
 }
 
 @media (max-width: 480px) {
+  .task-area { padding-bottom: 120px; }
+  .toast-stack { bottom: 96px; }
   .todo-header h1 { font-size: 20px; }
   .todo-subtitle { margin-bottom: 16px; font-size: 13px; }
-  .todo-add-btn { padding: 0 14px; font-size: 13px; }
-  .board { grid-template-columns: repeat(3, 82vw); gap: 10px; }
+  .todo-add-btn { padding: 0 12px; }
+  .board { gap: 10px; }
   .detail-grid { grid-template-columns: 1fr; gap: 10px; }
-  .chip { font-size: 10px; padding: 3px 8px; }
-  .detail-footer { flex-direction: column; align-items: flex-start; }
+  .chip { font-size: 10px; padding: 3px 8px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+  .todo-meta { gap: 4px; }
+  .detail-footer { flex-direction: column; align-items: flex-start; gap: 8px; }
   .detail-footer > div { width: 100%; justify-content: flex-end; }
-  .calendar-header { padding: 10px 12px; gap: 4px; }
-  .calendar-header h2 { font-size: 14px; }
-  .calendar-header .btn { padding: 6px 10px; font-size: 12px; }
-  .calendar-cell { min-height: 52px; }
-  .todo-input-row { flex-wrap: nowrap; }
+  .calendar-header { padding: 10px 12px; gap: 4px; flex-wrap: wrap; }
+  .calendar-header h2 { font-size: 14px; flex: 1 1 100px; min-width: 0; }
+  .calendar-header .btn { padding: 6px 10px; font-size: 12px; min-height: 36px; }
+  .calendar-cell { min-height: 56px; padding: 3px; }
+  .calendar-task { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .segmented { gap: 2px; padding: 2px; }
 }
 
 @media (max-width: 360px) {
-  .main { padding: 58px 12px 88px; }
-  .nav-toggle { left: 10px; top: 12px; padding: 7px; }
-  .theme-toggle { right: 10px; top: 12px; }
+  .main { padding: 52px 8px 84px; }
+  .nav-toggle { left: 8px; top: 8px; padding: 7px; min-width: 40px; min-height: 40px; }
+  .theme-toggle { right: 8px; top: 8px; }
   .todo-header h1 { font-size: 18px; }
   .toolbar select { flex-basis: 100%; max-width: 100%; }
-  .board { grid-template-columns: repeat(3, 88vw); }
   .sidebar { width: 88vw; }
+  .todo-item { padding: 10px 8px; }
+  .bento-tile { padding: 14px !important; }
 }

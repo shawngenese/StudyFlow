@@ -99,8 +99,12 @@ export default function TodoApp() {
     const done = list.filter((t) => t.completed)
     const sortFn = (a, b) => {
       switch (sort) {
-        case 'due':
-          return (a.dueDate || '9999').localeCompare(b.dueDate || '9999')
+        case 'due': {
+          if (!a.dueDate && !b.dueDate) return 0
+          if (!a.dueDate) return 1
+          if (!b.dueDate) return -1
+          return a.dueDate.localeCompare(b.dueDate) || a.createdAt - b.createdAt
+        }
         case 'priority':
           return b.priority - a.priority || a.createdAt - b.createdAt
         case 'created':
@@ -135,15 +139,17 @@ export default function TodoApp() {
     return () => window.removeEventListener('keydown', onEsc)
   }, [sidebarOpen])
 
+  const addingRef = useRef(false)
   async function addTask(e) {
     e.preventDefault()
+    if (addingRef.current) return
     const text = input.trim()
     if (!text) return
     if (text.length>500) { toast('Task too long','error'); return }
+    addingRef.current = true
     let dueDate = null
     let cleanText = text
     try{
-      // lazy chrono: avoid eager bundle
       const { parse: chronoParse } = await import('chrono-node')
       const results=chronoParse(text, new Date(), {forwardDate:true})
       if(results.length){
@@ -165,7 +171,7 @@ export default function TodoApp() {
         const chk=new Date(yy,mm-1,dd)
         if(chk.getFullYear()!==yy || chk.getMonth()!==mm-1 || chk.getDate()!==dd) dueDate=null
       }
-    }catch{ /* fallback to suffix */ }
+    }catch{ /* fallback to suffix */ } finally { /* ensure flag reset if early error before dispatch already handled */ }
     // quick-add tags #tag and priority !p1 !p2 !high
     let tags=[]
     const tagMatches=[...cleanText.matchAll(/#([a-z0-9_-]{1,20})/gi)]
@@ -180,7 +186,7 @@ export default function TodoApp() {
       cleanText=cleanText.replace(prioMatch[0],'').trim()
     }
     if(!cleanText) cleanText=text.replace(/#([a-z0-9_-]{1,20})/gi,'').replace(/\s!(p[1-3]|high|medium|low)\b/gi,'').trim()
-    if(!cleanText.trim()){ toast('Task text empty after parsing','error'); return }
+    if(!cleanText.trim()){ toast('Task text empty after parsing','error'); addingRef.current=false; return }
     dispatch({
       type: 'task/add',
       text: cleanText,
@@ -190,6 +196,7 @@ export default function TodoApp() {
       projectId: view.projectId || 'inbox',
     })
     setInput('')
+    addingRef.current=false
   }
 
   const deleteTask = useCallback((task) => {
@@ -276,20 +283,20 @@ export default function TodoApp() {
          view={view}
          open={sidebarOpen}
          onClose={() => setSidebarOpen(false)}
-         onViewChange={(v) => {
-           // sync query/tagFilter from saved filters
-           if (typeof v.query === 'string') setQuery(v.query)
-           if (typeof v.tagFilter === 'string') setTagFilter(v.tagFilter)
-           setView((prev) => {
-             const next = { ...prev }
-             if ('smart' in v) {
-               if (v.smart !== undefined) { next.smart = v.smart; next.projectId = undefined; next.savedFilterId = undefined }
-             }
-             if ('projectId' in v) {
-               if (v.projectId !== undefined && v.projectId !== null) { next.projectId = v.projectId; next.smart = null; next.savedFilterId = undefined }
-               else next.projectId = v.projectId
-             }
-             if ('savedFilterId' in v) next.savedFilterId = v.savedFilterId
+          onViewChange={(v) => {
+            if (typeof v.query === 'string') setQuery(v.query)
+            else if ('smart' in v || 'projectId' in v) { setQuery(''); setTagFilter('') }
+            if (typeof v.tagFilter === 'string') setTagFilter(v.tagFilter)
+            setView((prev) => {
+              const next = { ...prev }
+              if ('smart' in v) {
+                if (v.smart !== undefined) { next.smart = v.smart; next.projectId = undefined; next.savedFilterId = undefined; next.viewMode = 'list' }
+              }
+              if ('projectId' in v) {
+                if (v.projectId !== undefined && v.projectId !== null) { next.projectId = v.projectId; next.smart = null; next.savedFilterId = undefined; next.viewMode = 'list' }
+                else next.projectId = v.projectId
+              }
+              if ('savedFilterId' in v) { next.savedFilterId = v.savedFilterId; next.viewMode = 'list' }
              // copy remaining keys except those already handled
              for (const k of Object.keys(v)) {
                if (!['smart','projectId','savedFilterId','query','tagFilter'].includes(k)) next[k] = v[k]
@@ -318,7 +325,7 @@ export default function TodoApp() {
             <div><h1 style={{fontSize:'28px',margin:0, fontFamily:'var(--font-display)'}}>{heading}</h1><p className="todo-subtitle" style={{margin:'2px 0 0'}}>{visibleTasks.length===0 ? 'Nothing here yet.' : `${visibleTasks.filter(t=>!t.completed).length} tasks to focus on.`}</p></div>
             <div className="segmented" role="tablist" aria-label="View mode">
               {[['dashboard',<IconLayers size={14} key="d" />],['list',<IconList size={14} key="l" />],['board',<IconBoard size={14} key="b" />],['calendar',<IconCalendar size={14} key="c" />],['habits',<IconBolt size={14} key="h" />],['focus',<IconSun size={14} key="f" />],['notes',<IconBookmark size={14} key="n" />]].map(([key,icon])=>(
-                <button key={key} role="tab" aria-selected={(view.viewMode||'list')===key} type="button" className={(view.viewMode||'list')===key?'is-active':''} onClick={()=>setView(v=>({...v,viewMode:key}))} aria-controls="task-panel">{icon}<span className="view-label">{key[0].toUpperCase()+key.slice(1)}</span></button>
+                <button key={key} role="tab" aria-selected={(view.viewMode||'list')===key} aria-label={key} type="button" className={(view.viewMode||'list')===key?'is-active':''} onClick={()=>setView(v=>({...v,viewMode:key}))} aria-controls="task-panel">{icon}<span className="view-label">{key[0].toUpperCase()+key.slice(1)}</span></button>
               ))}
             </div>
           </div>
@@ -340,7 +347,7 @@ export default function TodoApp() {
             </div>
           </div>
 
-          {(view.viewMode==='dashboard') ? <div style={{gridColumn:'span 12',display:'contents'}}><div style={{gridColumn:'span 12'}}><Suspense fallback={<div className="bento-tile">Loading…</div>}><BentoGrid data={data} dispatch={dispatch} visibleTasks={visibleTasks} onSelect={setSelectedId} setView={setView} /></Suspense></div></div> : null}
+          {(view.viewMode==='dashboard') ? <Suspense fallback={<div className="bento-tile" style={{gridColumn:'span 12'}}>Loading…</div>}><BentoGrid data={data} dispatch={dispatch} visibleTasks={visibleTasks} onSelect={setSelectedId} setView={setView} /></Suspense> : null}
           {(view.viewMode==='habits') ? <div className="bento-tile tile-habits-full"><Suspense fallback={<div>Loading…</div>}><HabitTracker habits={data.habits||[]} dispatch={dispatch} /></Suspense></div> : null}
           {(view.viewMode==='focus') ? <div className="bento-tile tile-focus-full"><Suspense fallback={<div>Loading…</div>}><FocusTimer selectedTask={selectedTask} dispatch={dispatch} /></Suspense></div> : null}
           {(view.viewMode==='notes') ? <div className="bento-tile tile-notes"><Suspense fallback={<div>Loading…</div>}><NotesView docs={data.docs||[]} projects={data.projects} dispatch={dispatch} /></Suspense></div> : null}

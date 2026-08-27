@@ -12,9 +12,18 @@ export default function TaskDetail({ task, project, projects, dispatch }) {
   const [tagInput, setTagInput] = useState('')
   const [dueInput, setDueInput] = useState(task?.dueDate || '')
   const [subInput, setSubInput] = useState('')
+  const [localTitle, setLocalTitle] = useState(task?.text || '')
   const notesRef = useRef(null)
   const titleRef = useRef(null)
   const dueRef = useRef(null)
+  const titleTimer = useRef(null)
+  const notesLatest = useRef(task?.notes || '')
+  const notesTimer = useRef(null)
+
+  useEffect(() => { setLocalTitle(task?.text || '') }, [task?.id, task?.text])
+  useEffect(() => { notesLatest.current = task?.notes || '' }, [task?.notes])
+  useEffect(() => () => { if (titleTimer.current) clearTimeout(titleTimer.current) }, [])
+  useEffect(() => () => { if (notesTimer.current) clearTimeout(notesTimer.current) }, [])
 
   useEffect(() => {
     if (document.activeElement === dueRef.current) return
@@ -22,34 +31,32 @@ export default function TaskDetail({ task, project, projects, dispatch }) {
   }, [task?.id, task?.dueDate])
 
   useEffect(() => {
+    if (!task) return
     const el = titleRef.current
     if (!el) return
-    const supportsFieldSizing = CSS.supports && CSS.supports('field-sizing', 'content')
-    if (supportsFieldSizing) return
-    el.style.height = 'auto'
-    el.style.height = `${el.scrollHeight}px`
+    if (typeof CSS !== 'undefined' && CSS.supports && CSS.supports('field-sizing', 'content')) return
+    requestAnimationFrame(() => {
+      el.style.height = 'auto'
+      el.style.height = `${el.scrollHeight}px`
+    })
   }, [task?.text, task?.id])
 
   useEffect(() => {
-    if (notesMode !== 'edit') return
+    if (!task || notesMode !== 'edit') return
     const el = notesRef.current
     if (!el) return
-    const supportsFieldSizing = CSS.supports && CSS.supports('field-sizing', 'content')
-    if (supportsFieldSizing) return
-    el.style.height = 'auto'
-    el.style.height = `${Math.max(110, el.scrollHeight)}px`
+    if (typeof CSS !== 'undefined' && CSS.supports && CSS.supports('field-sizing', 'content')) return
+    requestAnimationFrame(() => {
+      el.style.height = 'auto'
+      el.style.height = `${Math.max(110, el.scrollHeight)}px`
+    })
   }, [task?.notes, task?.id, notesMode])
 
-
-  const [localTitle,setLocalTitle]=useState(task?.text || '')
-  useEffect(()=>{ setLocalTitle(task?.text || '') },[task?.id, task?.text])
-  const titleTimer=useRef(null)
-  function patchTitle(v){
+  function patchTitle(v) {
     setLocalTitle(v)
-    if(titleTimer.current) clearTimeout(titleTimer.current)
-    titleTimer.current=setTimeout(()=>{ if(v.trim()) patch({text:v}) }, 400)
+    if (titleTimer.current) clearTimeout(titleTimer.current)
+    titleTimer.current = setTimeout(() => { if (v.trim() && task) patch({ text: v }) }, 400)
   }
-  useEffect(()=>()=>{ if(titleTimer.current) clearTimeout(titleTimer.current) },[])
 
   if (!task) {
     return (
@@ -61,10 +68,6 @@ export default function TaskDetail({ task, project, projects, dispatch }) {
   }
 
   const patch = (p) => dispatch({ type: 'task/update', id: task.id, patch: p })
-  const notesLatest=useRef(task?.notes || '')
-  useEffect(()=>{ notesLatest.current=task?.notes || '' },[task?.notes])
-  const notesTimer=useRef(null)
-  useEffect(()=>()=>{ if(notesTimer.current) clearTimeout(notesTimer.current) },[])
 
   function applyNaturalDate() {
     if (!dueInput.trim()) return patch({ dueDate: null })
@@ -100,8 +103,8 @@ export default function TaskDetail({ task, project, projects, dispatch }) {
     const reader = new FileReader()
     reader.onerror = () => toast('Failed to read image', 'error')
     reader.onload = () => {
-      const baseLen=String(reader.result||'').length
-      if(baseLen>50000){ toast('Image too large after encoding','error'); return }
+      const baseLen = String(reader.result || '').length
+      if (baseLen > 50000) { toast('Image too large after encoding', 'error'); return }
       const md = `\n![image](${reader.result})\n`
       patch({ notes: (notesLatest.current || '') + md })
       toast('Image added to notes')
@@ -137,13 +140,13 @@ export default function TaskDetail({ task, project, projects, dispatch }) {
         aria-label="Task title"
         placeholder="Task title"
         onChange={(e) => patchTitle(e.target.value)}
-        onBlur={()=>{ if(localTitle.trim() && localTitle!==task.text) patch({text: localTitle}) }}
+        onBlur={() => { if (localTitle.trim() && localTitle !== task.text) patch({ text: localTitle }) }}
       />
 
       <div className="detail-grid">
         <label className="detail-field">
           <span className="detail-label">Project</span>
-          <select value={projects.some((p)=>p.id===task.projectId) ? task.projectId : 'inbox'} onChange={(e) => patch({ projectId: e.target.value })}>
+          <select value={projects.some((p) => p.id === task.projectId) ? task.projectId : 'inbox'} onChange={(e) => patch({ projectId: e.target.value })}>
             {projects.map((p) => (
               <option key={p.id} value={p.id}>{p.emoji || '📁'} {p.name}</option>
             ))}
@@ -177,17 +180,17 @@ export default function TaskDetail({ task, project, projects, dispatch }) {
             onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); applyNaturalDate() } }}
           />
         </label>
-        <details style={{gridColumn:'span 2'}}><summary className="detail-label" style={{cursor:'pointer',listStyle:'none'}}>⋯ Advanced — Estimate & Repeat</summary>
-          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'12px',marginTop:'10px'}}>
+        <details style={{ gridColumn: 'span 2' }}><summary className="detail-label" style={{ cursor: 'pointer', listStyle: 'none' }}>⋯ Advanced — Estimate & Repeat</summary>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginTop: '10px' }}>
             <label className="detail-field">
               <span className="detail-label">Estimate</span>
-              <select value={task.estimate||0} onChange={e=> patch({ estimate:Number(e.target.value)})}>
+              <select value={task.estimate || 0} onChange={(e) => patch({ estimate: Number(e.target.value) })}>
                 <option value={0}>—</option><option value={15}>15m</option><option value={30}>30m</option><option value={60}>1h</option><option value={120}>2h</option>
               </select>
             </label>
             <label className="detail-field">
               <span className="detail-label">Repeat</span>
-              <select value={task.repeat||''} onChange={e=> patch({ repeat: e.target.value || null })}>
+              <select value={task.repeat || ''} onChange={(e) => patch({ repeat: e.target.value || null })}>
                 <option value="">No repeat</option><option value="daily">Daily</option><option value="weekly">Weekly</option>
               </select>
             </label>
@@ -228,11 +231,11 @@ export default function TaskDetail({ task, project, projects, dispatch }) {
             <li key={s.id} className={s.completed ? 'is-done' : ''}>
               <input type="checkbox" checked={s.completed} onChange={() => dispatch({ type: 'subtask/toggle', taskId: task.id, subId: s.id })} aria-label={s.text} />
               <span title={s.text}>{s.text}</span>
-              <button type="button" className="todo-icon-btn delete" aria-label={`Delete subtask ${s.text.slice(0,30)}`} onClick={() => dispatch({ type: 'subtask/delete', taskId: task.id, subId: s.id })}>×</button>
+              <button type="button" className="todo-icon-btn delete" aria-label={`Delete subtask ${s.text.slice(0, 30)}`} onClick={() => dispatch({ type: 'subtask/delete', taskId: task.id, subId: s.id })}>×</button>
             </li>
           ))}
         </ul>
-        <form onSubmit={(e) => { e.preventDefault(); const t = subInput.trim().slice(0,200); if (!t) return; dispatch({ type: 'subtask/add', taskId: task.id, text: t }); setSubInput('') }}>
+        <form onSubmit={(e) => { e.preventDefault(); const t = subInput.trim().slice(0, 200); if (!t) return; dispatch({ type: 'subtask/add', taskId: task.id, text: t }); setSubInput('') }}>
           <input type="text" placeholder="+ Add subtask" value={subInput} maxLength={200} onChange={(e) => setSubInput(e.target.value)} aria-label="New subtask" />
         </form>
       </section>
@@ -251,7 +254,7 @@ export default function TaskDetail({ task, project, projects, dispatch }) {
             className="detail-notes-input"
             placeholder="Write anything — **markdown** supported. Paste an image to attach it."
             value={task.notes}
-            onChange={(e) => { const v=e.target.value; notesLatest.current=v; if(notesTimer.current) clearTimeout(notesTimer.current); notesTimer.current=setTimeout(()=> patch({ notes: v }), 350)}}
+            onChange={(e) => { const v = e.target.value; notesLatest.current = v; if (notesTimer.current) clearTimeout(notesTimer.current); notesTimer.current = setTimeout(() => patch({ notes: v }), 600) }}
             rows={4}
             aria-label="Task notes"
           />

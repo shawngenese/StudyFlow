@@ -52,7 +52,7 @@ export default function CalendarView({ tasks, allTasks, onSelect }) {
     <div className="calendar" role="grid" aria-label="Calendar">
       <header className="calendar-header">
         <button type="button" className="btn btn-ghost" onClick={() => move(-1)} aria-label="Previous month">‹</button>
-        <h2 aria-live="polite" aria-atomic="true">{new Date(year, month).toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}</h2>
+        <h2 aria-live="polite" aria-atomic="true">{new Date(year, month).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</h2>
         <button type="button" className="btn btn-ghost" onClick={() => move(1)} aria-label="Next month">›</button>
         <button type="button" className="btn btn-ghost" onClick={goToday}>Today</button>
       </header>

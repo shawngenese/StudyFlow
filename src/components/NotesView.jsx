@@ -7,9 +7,9 @@ export default function NotesView({ docs, projects, dispatch }){
   const doc = docs.find(d=>d.id===active) || null
   const [edit,setEdit]=useState(false)
   const filtered = filter==='all'? docs : docs.filter(d=>d.projectId===filter)
-  return (
-    <div style={{display:'flex',gap:'16px',alignItems:'flex-start'}}>
-      <div style={{width:'240px',flexShrink:0,background:'var(--bg-panel)',border:'1px solid var(--border)',borderRadius:'14px',padding:'10px',maxHeight:'60vh',overflowY:'auto'}}>
+   return (
+    <div className="notes-layout" style={{display:'flex',gap:'16px',alignItems:'flex-start'}}>
+      <div className="notes-sidebar" style={{width:'240px',flexShrink:0,background:'var(--bg-panel)',border:'1px solid var(--border)',borderRadius:'14px',padding:'10px',maxHeight:'60vh',overflowY:'auto'}}>
         <button type="button" className="todo-add-btn" style={{width:'100%',marginBottom:'10px'}} onClick={()=>dispatch({type:'doc/add', title:'Untitled note', projectId:'inbox'})}>+ New note</button>
         <select value={filter} onChange={e=>setFilter(e.target.value)} style={{width:'100%',marginBottom:'10px'}}>
           <option value="all">All courses</option>
@@ -22,7 +22,7 @@ export default function NotesView({ docs, projects, dispatch }){
           {filtered.length===0 && <li className="muted" style={{padding:'12px',textAlign:'center'}}>No notes — create one.</li>}
         </ul>
       </div>
-      <div style={{flex:1,minWidth:0,background:'var(--bg-panel)',border:'1px solid var(--border)',borderRadius:'14px',padding:'18px'}}>
+      <div className="notes-main" style={{flex:1,minWidth:0,background:'var(--bg-panel)',border:'1px solid var(--border)',borderRadius:'14px',padding:'18px'}}>
         {!doc ? <p className="muted">Select or create a note.</p> : (
           <>
             <input value={doc.title} onChange={e=>dispatch({type:'doc/update', id:doc.id, patch:{title:e.target.value}})} placeholder="Title" style={{width:'100%',fontSize:'18px',fontWeight:650,border:'none',background:'transparent',padding:'4px 0',marginBottom:'8px'}} />

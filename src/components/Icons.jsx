@@ -8,7 +8,7 @@ const base = {
 
 function Svg({ children, size = 16, ...rest }) {
   return (
-    <svg viewBox="0 0 24 24" width={size} height={size} aria-hidden="true" {...base} {...rest}>
+    <svg viewBox="0 0 24 24" width={size} height={size} aria-hidden="true" style={{ flexShrink: 0 }} {...base} {...rest}>
       {children}
     </svg>
   )
@@ -149,7 +149,7 @@ export const IconCloudSun = (p) => (
 )
 
 export const IconFlag = ({ size = 12, ...rest }) => (
-  <svg viewBox="0 0 24 24" width={size} height={size} fill="currentColor" aria-hidden="true" {...rest}>
+  <svg viewBox="0 0 24 24" width={size} height={size} fill="currentColor" stroke="none" aria-hidden="true" style={{ flexShrink: 0 }} {...rest}>
     <path d="M5 3a1 1 0 0 1 1 1v1.1c2.6-1.3 5.4-1.3 8 0 2.3 1.15 4.7 1.2 7 .05V14c-2.3 1.15-4.7 1.1-7-.05-2.6-1.3-5.4-1.3-8 0V21a1 1 0 1 1-2 0V4a1 1 0 0 1 1-1z" />
   </svg>
 )

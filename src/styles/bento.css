@@ -26,7 +26,7 @@
 .tile-notes { grid-column: span 12; }
 .bento-handle { position:absolute; top:12px; right:12px; display:inline-flex; align-items:center; justify-content:center; width:28px; height:28px; border-radius:9px; color:var(--text-muted); opacity:0.18; cursor:grab; background:var(--bg-inset); border:1px solid var(--border); z-index:2; transition: opacity 0.2s ease; }
 .bento-tile:hover .bento-handle { opacity:0.4 }
-.bento.is-editing .bento-handle { opacity:0.85 }
+.bento.is-editing .bento-handle, .bento-dashboard.is-editing .bento-handle { opacity:0.85 }
 .bento-handle:active { cursor:grabbing }
 
 @media(max-width:1100px){
@@ -34,9 +34,38 @@
   .tile-hero{grid-column: span 8; min-height:auto;}
   .tile-tasks{grid-column: span 8}
   .tile-detail{grid-column: span 8}
+  /* dashboard tiles balanced on 8-col: 2 per row */
+  .tile-stats, .tile-focus, .tile-habits, .tile-cal, .tile-courses { grid-column: span 4; }
 }
 @media(max-width:720px){
-  .bento{grid-template-columns:1fr; gap:14px;}
-  .bento-tile{grid-column: span 1 !important; padding:16px;}
+  .bento{grid-template-columns:1fr; gap:16px;}
+  .bento-tile{grid-column: span 1 !important; padding:16px; min-width: 0; overflow: hidden; }
   .tile-composer .todo-input-row { flex-direction: column; }
+  .tile-composer .todo-input { width: 100%; }
+  .tile-header { flex-direction: column; align-items: flex-start !important; }
+  .tile-header .segmented { width: 100%; justify-content: flex-start; }
+  .bento-tile.is-dragging { transform: none; opacity: 0.9; }
+  /* dashboard mobile: de-squish interiors */
+  .hero-task-row { padding:7px 8px !important; }
+  .hero-task-row span { font-size:13px; }
+  .habit-row { padding:6px !important; }
+  .course-row { gap:6px !important; }
+  .cal-week-grid { gap:4px !important; }
+  .cal-week-grid > div { padding:5px 2px !important; }
+  .cal-week-grid > div > div:nth-child(2) { font-size:13px; }
+}
+@media(max-width:480px){
+  .bento{ gap:14px; }
+  .bento-tile{ padding:14px; border-radius:16px; }
+  /* dashboard mobile de-squish: compact yet readable */
+  .tile-hero { min-height:auto; }
+  .hero-task-row { padding:6px 8px !important; gap:6px !important; }
+  .cal-week-grid { gap:2px !important; }
+  .cal-week-grid > div { padding:3px 1px !important; font-size:11px; }
+  .cal-week-grid > div > div:first-child { font-size:8px !important; }
+  .course-row span:first-child { width:60px !important; font-size:11px !important; }
+  /* stats 2x2 breathing room */
+  .tile-stats > div { gap:6px !important; }
+  .stat-value { font-size:16px !important; }
+  .tile-habits .habit-row span { font-size:12px !important; }
 }

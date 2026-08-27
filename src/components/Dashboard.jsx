@@ -20,7 +20,7 @@ export default function Dashboard({ data, dispatch }){
   },[data])
 
   const Card=({label,value,sub})=>(
-    <div style={{background:'var(--bg-panel)',border:'1px solid var(--border)',borderRadius:'14px',padding:'16px',flex:'1 1 160px'}}>
+    <div style={{background:'var(--bg-panel)',border:'1px solid var(--border)',borderRadius:'14px',padding:'16px',flex:'1 1 120px'}}>
       <div style={{color:'var(--text-muted)',fontSize:'11px',fontWeight:600,letterSpacing:'0.07em',textTransform:'uppercase'}}>{label}</div>
       <div style={{fontSize:'22px',fontWeight:700,marginTop:'4px'}}>{value}</div>
       {sub && <div className="muted" style={{marginTop:'2px'}}>{sub}</div>}

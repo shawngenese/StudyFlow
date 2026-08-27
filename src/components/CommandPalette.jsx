@@ -27,7 +27,7 @@ export default function CommandPalette({ open, onClose, tasks, onSelect, dispatc
             }
             if(results[0]){ onSelect(results[0].id); onClose() }
           }
-        }} style={{width:'100%',border:'none',borderBottom:'1px solid var(--border)',borderRadius:0,padding:'14px 16px',fontSize:'15px'}} />
+        }} style={{width:'100%',border:'none',borderBottom:'1px solid var(--border)',borderRadius:0,padding:'14px 16px',fontSize:'16px'}} />
         <ul style={{listStyle:'none',margin:0,padding:'6px',maxHeight:'280px',overflowY:'auto'}}>
           {results.map(t=>(
             <li key={t.id}><button type="button" onClick={()=>{onSelect(t.id); onClose()}} style={{width:'100%',textAlign:'left',padding:'10px 12px',borderRadius:'8px',display:'flex',justifyContent:'space-between'}} className="cmd-item"><span>{t.text.slice(0,60)}</span><span style={{color:'var(--text-muted)',fontSize:'12px'}}>{t.projectId}</span></button></li>

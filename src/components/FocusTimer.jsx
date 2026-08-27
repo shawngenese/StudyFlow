@@ -7,7 +7,6 @@ export default function FocusTimer({ selectedTask, dispatch }){
   const [secs,setSecs]=useState(25*60)
   const [running,setRunning]=useState(false)
   const [completed,setCompleted]=useState(0)
-  const prevTask=useRef(null)
   const raf=useRef(null)
   const startRef=useRef(null)
 
@@ -51,7 +50,12 @@ export default function FocusTimer({ selectedTask, dispatch }){
     setRunning(true)
   }
   function pause(){ setRunning(false); if(raf.current){ cancelAnimationFrame(raf.current); raf.current=null } }
-  function reset(m=minutes){ const v=Math.max(1,Math.min(180,m)); setRunning(false); setSecs(v*60); startRef.current=null; setMinutes(v) }
+  function reset(m=minutes){ const v=Math.max(1,Math.min(180,m)); setRunning(false); if(raf.current){ cancelAnimationFrame(raf.current); raf.current=null } setSecs(v*60); startRef.current=null; setMinutes(v) }
+  useEffect(()=>{
+    function onVis(){ if(document.visibilityState==='hidden' && running) { /* pause tick, keep startRef */ if(raf.current){ cancelAnimationFrame(raf.current); raf.current=null } } else if(document.visibilityState==='visible' && running){ raf.current=requestAnimationFrame(tick) } }
+    document.addEventListener('visibilitychange', onVis)
+    return ()=> document.removeEventListener('visibilitychange', onVis)
+  },[running, tick])
 
   const totalForPct=minutes*60 || 1
   const pct = Math.max(0, Math.min(100, Math.round((1 - secs/totalForPct)*100)))

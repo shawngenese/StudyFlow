@@ -1,5 +1,5 @@
 import { newId } from '../lib/id'
-import { normalizeTask, loadData, SCHEMA_VERSION } from '../lib/storage'
+import { normalizeTask, loadData, normalizeImport, SCHEMA_VERSION } from '../lib/storage'
 
 export const PRIORITIES = { 0: 'None', 1: 'Low', 2: 'Medium', 3: 'High' }
 export const STATUS_LABELS = { todo: 'To do', doing: 'In progress', done: 'Done' }
@@ -358,29 +358,10 @@ export function reducer(state, action) {
       }
     }
     case '__hydrate': {
-      if (!action.data || typeof action.data !== 'object') return state
-      if (Object.hasOwn(action.data, '__proto__') || Object.hasOwn(action.data,'constructor')) return state
-      const d = action.data
-      if (!Array.isArray(d.tasks) || !Array.isArray(d.projects)) return state
-      if (d.tasks.length > 5000) return state
-      try {
-        const loaded = loadData()
-        // re-use storage normalization to validate; we construct a fake raw
-        const fakeRaw = JSON.stringify({ version: SCHEMA_VERSION, projects: d.projects, tasks: d.tasks, savedFilters: d.savedFilters, habits: d.habits, docs: d.docs, goals: d.goals, focusSessions: d.focusSessions })
-        const prev = localStorage.getItem('shawn-todos-v3')
-        localStorage.setItem('shawn-todos-v3', fakeRaw)
-        const normalized = loadData()
-        if (prev) localStorage.setItem('shawn-todos-v3', prev); else localStorage.removeItem('shawn-todos-v3')
-        // fallback to untrusted if loadData blanked
-        if (!normalized.tasks.length && d.tasks.length) return state
-        void loaded
-        const allowed=new Set(['tasks','projects','savedFilters','habits','docs','goals','focusSessions','version'])
-        const base={}
-        for(const k of Object.keys(normalized)) if(allowed.has(k)) base[k]=normalized[k]
-        return { ...state, present: { ...state.present, ...base, version: SCHEMA_VERSION } }
-      } catch {
-        return state
-      }
+      const normalized = normalizeImport(action.data)
+      if (!normalized) return state
+      if (!normalized.tasks.length && action.data?.tasks?.length) return state
+      return { ...state, present: { ...state.present, ...normalized, version: SCHEMA_VERSION } }
     }
     default:
       return state
