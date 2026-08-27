@@ -20,7 +20,7 @@ export default function Dashboard({ data, dispatch }){
   },[data])
 
   const Card=({label,value,sub})=>(
-    <div style={{background:'var(--bg-panel)',border:'1px solid var(--border)',borderRadius:'14px',padding:'16px',flex:'1 1 120px'}}>
+    <div style={{background:'var(--bg-panel)',border:'1px solid var(--border)',borderRadius:'14px',padding:'16px',minWidth:0}}>
       <div style={{color:'var(--text-muted)',fontSize:'11px',fontWeight:600,letterSpacing:'0.07em',textTransform:'uppercase'}}>{label}</div>
       <div style={{fontSize:'22px',fontWeight:700,marginTop:'4px'}}>{value}</div>
       {sub && <div className="muted" style={{marginTop:'2px'}}>{sub}</div>}
@@ -29,7 +29,7 @@ export default function Dashboard({ data, dispatch }){
   return (
     <div style={{display:'flex',flexDirection:'column',gap:'16px'}}>
       <header><h2 style={{fontSize:'18px'}}>Dashboard</h2><p className="todo-subtitle" style={{marginBottom:0}}>Your study pulse — tasks, habits, focus.</p></header>
-      <div style={{display:'flex',gap:'12px',flexWrap:'wrap'}}>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(140px, 1fr))',gap:'12px'}}>
         <Card label="Today" value={`${data.tasks.filter(x=>!x.completed && x.dueDate===todayKey()).length} due`} sub={`${stats.overdue} overdue`} />
         <Card label="Completed" value={stats.doneThisWeek} sub="last 7 days" />
         <Card label="Focus" value={`${Math.round(stats.focusMins)}m`} sub={`${(data.focusSessions||[]).length} sessions`} />
@@ -44,10 +44,10 @@ export default function Dashboard({ data, dispatch }){
               const proj=data.projects.find(p=>p.id===pid)
               const max=Math.max(...Object.values(stats.byCourse))
               return (
-                <div key={pid} style={{display:'flex',alignItems:'center',gap:'10px'}}>
-                  <span style={{width:'120px',fontSize:'13px',fontWeight:500,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{proj?.name || pid}</span>
-                  <div style={{flex:1,height:'8px',background:'var(--bg-inset)',borderRadius:'999px',overflow:'hidden'}}><div style={{width:`${(count/max)*100}%`,height:'100%',background:'var(--accent)'}} /></div>
-                  <span style={{fontSize:'12px',color:'var(--text-muted)',width:'24px',textAlign:'right'}}>{count}</span>
+                <div key={pid} style={{display:'flex',alignItems:'center',gap:'10px',minWidth:0}}>
+                  <span style={{width:'90px',flexShrink:0,fontSize:'13px',fontWeight:500,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{proj?.name || pid}</span>
+                  <div style={{flex:1,minWidth:0,height:'8px',background:'var(--bg-inset)',borderRadius:'999px',overflow:'hidden'}}><div style={{width:`${(count/max)*100}%`,height:'100%',background:'var(--accent)'}} /></div>
+                  <span style={{fontSize:'12px',color:'var(--text-muted)',width:'24px',textAlign:'right',flexShrink:0}}>{count}</span>
                 </div>
               )
             })}
@@ -56,7 +56,7 @@ export default function Dashboard({ data, dispatch }){
       </div>
       <div style={{background:'var(--bg-panel)',border:'1px solid var(--border)',borderRadius:'14px',padding:'16px'}}>
         <h3 style={{fontSize:'13px',marginBottom:'10px'}}>Goals</h3>
-        {data.goals?.length>0 ? <ul style={{margin:0,paddingLeft:'18px',marginBottom:'10px'}}>{data.goals.map(g=> <li key={g.id} style={{marginBottom:'4px',display:'flex',justifyContent:'space-between'}}><span>{g.title} {g.targetDate && <span className="muted">· due {g.targetDate}</span>}</span><button type="button" onClick={()=>dispatch({type:'goal/delete', id:g.id})} style={{color:'var(--text-muted)'}}>×</button></li>)}</ul> : <p className="muted">No goals yet — set a semester target.</p>}
+        {data.goals?.length>0 ? <ul style={{margin:0,paddingLeft:'18px',marginBottom:'10px'}}>{data.goals.map(g=> <li key={g.id} style={{marginBottom:'4px',display:'flex',justifyContent:'space-between',gap:'8px',minWidth:0}}><span style={{flex:1,minWidth:0,overflowWrap:'anywhere'}}>{g.title} {g.targetDate && <span className="muted">· due {g.targetDate}</span>}</span><button type="button" onClick={()=>dispatch({type:'goal/delete', id:g.id})} style={{color:'var(--text-muted)',flexShrink:0}}>×</button></li>)}</ul> : <p className="muted">No goals yet — set a semester target.</p>}
         <form onSubmit={e=>{e.preventDefault(); if(!goalInput.trim()) return; dispatch({type:'goal/add', title:goalInput.trim()}); setGoalInput('')}} style={{display:'flex',gap:'8px',marginTop:'8px'}}>
           <input value={goalInput} onChange={e=>setGoalInput(e.target.value)} placeholder="New goal — e.g., Ace finals" style={{flex:1}} maxLength={60} />
           <button type="submit" className="todo-add-btn" disabled={!goalInput.trim()}>Add</button>

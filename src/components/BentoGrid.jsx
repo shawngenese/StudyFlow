@@ -169,7 +169,7 @@ export default function BentoGrid({ data, dispatch, visibleTasks, onSelect, setV
 
   return (
     <>
-      <div style={{gridColumn:'span 12',display:'flex',justifyContent:'flex-end'}}>
+      <div className="bento-edit-row" style={{gridColumn:'span 12',display:'flex',justifyContent:'flex-end'}}>
         <button type="button" className={isEditing?'todo-add-btn':'btn'} style={{fontSize:'12px'}} onClick={()=>setIsEditing(v=>!v)}>{isEditing?'Done':'Edit layout'}</button>
       </div>
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleTileDragEnd}>

@@ -29,8 +29,11 @@
 .bento.is-editing .bento-handle, .bento-dashboard.is-editing .bento-handle { opacity:0.85 }
 .bento-handle:active { cursor:grabbing }
 
+.bento-edit-row{grid-column: span 12;}
 @media(max-width:1100px){
   .bento{grid-template-columns: repeat(8,1fr); gap:16px;}
+  .bento-edit-row{grid-column: span 8 !important;}
+  .tile-header, .tile-composer, .tile-board, .tile-calendar, .tile-habits-full, .tile-focus-full, .tile-notes {grid-column: span 8 !important;}
   .tile-hero{grid-column: span 8; min-height:auto;}
   .tile-tasks{grid-column: span 8}
   .tile-detail{grid-column: span 8}
@@ -39,6 +42,7 @@
 }
 @media(max-width:720px){
   .bento{grid-template-columns:1fr; gap:16px;}
+  .bento-edit-row{grid-column: span 1 !important;}
   .bento-tile{grid-column: span 1 !important; padding:16px; min-width: 0; overflow: hidden; }
   .tile-composer .todo-input-row { flex-direction: column; }
   .tile-composer .todo-input { width: 100%; }
