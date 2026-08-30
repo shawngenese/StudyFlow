@@ -43,5 +43,3 @@ export function TaskMeta({ task, compact = false }) {
     </div>
   )
 }
-
-export { PRIORITY_SHORT }
