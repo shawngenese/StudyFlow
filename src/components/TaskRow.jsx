@@ -1,21 +1,9 @@
 import { memo, useCallback } from 'react'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { PRIORITIES } from '../state/reducer'
-import { humanDue, isOverdue } from '../lib/date'
-import { IconCalendar, IconWarning, IconGrip, IconPencil, IconTrash, IconCheckSquare, IconFlag } from './Icons'
-
-const PRIORITY_SHORT = { 1: 'Low', 2: 'Med', 3: 'High' }
-
-function PriorityFlag({ level }) {
-  if (!level) return null
-  return (
-    <span className={`chip chip-priority p${level}`} title={`${PRIORITIES[level]} priority`} aria-label={`${PRIORITIES[level]} priority`}>
-      <IconFlag size={11} />
-      {PRIORITY_SHORT[level]}
-    </span>
-  )
-}
+import { IconGrip, IconPencil, IconTrash } from './Icons'
+import { TaskCheckbox } from './TaskCheckbox'
+import { TaskMeta } from './TaskMeta'
 
 function TaskRow({
   task,
@@ -23,13 +11,12 @@ function TaskRow({
   onSelect,
   onToggle,
   onDelete,
-  done = 0,
-  total = 0,
+  canReorder = true,
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: task.id,
+    disabled: !canReorder,
   })
-  const overdue = isOverdue(task)
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
@@ -39,64 +26,55 @@ function TaskRow({
     if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelect(task.id) }
   }, [onSelect, task.id])
 
+  const handleSelect = useCallback(()=> onSelect(task.id), [onSelect, task.id])
+  const handleDelete = useCallback((e)=>{ e.stopPropagation(); onDelete(task) }, [onDelete, task])
+  const handleEdit = useCallback((e)=>{ e.stopPropagation(); onSelect(task.id) }, [onSelect, task.id])
+  const handleToggle = useCallback(()=> onToggle(task.id), [onToggle, task.id])
+
   return (
     <li
       ref={setNodeRef}
       style={style}
       className={`todo-item ${task.completed ? 'is-completed' : ''} ${selected ? 'is-selected' : ''}`}
-      onClick={() => onSelect(task.id)}
+      onClick={handleSelect}
       role="option"
       tabIndex={0}
       onKeyDown={onRowKey}
       aria-selected={selected}
+      aria-label={`${task.text.slice(0,60)}${task.completed?' — completed':''}${selected?' — selected':''}`}
     >
       <button
         type="button"
         className="todo-drag-handle"
-        aria-label={`Reorder ${task.text.slice(0,30)}`}
+        aria-label={canReorder ? `Reorder ${task.text.slice(0,30)}` : 'Reordering disabled — switch to Manual sort'}
+        title={canReorder ? 'Drag to reorder' : 'Switch to Manual sort to reorder'}
         {...attributes}
         {...listeners}
         onClick={(e) => e.stopPropagation()}
+        style={!canReorder ? { opacity: 0.25, cursor: 'not-allowed' } : undefined}
+        disabled={!canReorder}
+        tabIndex={canReorder ? 0 : -1}
       >
         <IconGrip size={14} />
       </button>
 
-      <label className="todo-check" onClick={(e) => e.stopPropagation()}>
-        <input type="checkbox" checked={task.completed} onChange={() => onToggle(task.id)} aria-label={`Mark ${task.text.slice(0,40)} ${task.completed ? 'incomplete' : 'complete'}`} />
-        <span className="todo-check-box" aria-hidden="true">
-          <svg viewBox="0 0 16 16" width="12" height="12">
-            <path d="M3 8.5l3.2 3.2L13 4.8" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </span>
-      </label>
+      <TaskCheckbox
+        checked={task.completed}
+        onChange={handleToggle}
+        label={`Mark ${task.text.slice(0, 40)} ${task.completed ? 'incomplete' : 'complete'}`}
+        stopPropagation
+      />
 
       <div className="todo-item-body">
         <span className="todo-text">{task.text}</span>
-        <div className="todo-meta">
-          {total > 0 && (
-            <span className={`chip chip-progress ${done === total ? 'is-done' : ''}`}>
-              <IconCheckSquare size={11} /> {done}/{total}
-            </span>
-          )}
-          <PriorityFlag level={task.priority} />
-          {task.dueDate && (
-            <span className={`chip chip-due ${overdue ? 'is-overdue' : ''}`}>
-              {overdue ? <IconWarning size={11} /> : <IconCalendar size={11} />} {humanDue(task.dueDate)}
-            </span>
-          )}
-          {task.estimate > 0 && <span className="chip">⏱ {task.estimate}m</span>}
-          {task.repeat && <span className="chip">↻ {task.repeat}</span>}
-          {task.tags.map((tag) => (
-            <span key={tag} className="chip chip-tag">#{tag}</span>
-          ))}
-        </div>
+        <TaskMeta task={task} />
       </div>
 
-      <div className="todo-actions" onClick={(e) => e.stopPropagation()}>
-        <button type="button" className="todo-icon-btn edit" title="Edit (opens detail)" aria-label={`Edit ${task.text.slice(0,40)}`} onClick={() => onSelect(task.id)}>
+      <div className="todo-actions">
+        <button type="button" className="todo-icon-btn edit" title="Edit (opens detail)" aria-label={`Edit ${task.text.slice(0,40)}`} onClick={handleEdit}>
           <IconPencil size={16} />
         </button>
-        <button type="button" className="todo-icon-btn delete" title="Delete" aria-label={`Delete ${task.text.slice(0,40)}`} onClick={() => onDelete(task)}>
+        <button type="button" className="todo-icon-btn delete" title="Delete" aria-label={`Delete ${task.text.slice(0,40)}`} onClick={handleDelete}>
           <IconTrash size={16} />
         </button>
       </div>

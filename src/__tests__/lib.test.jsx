@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach } from 'vitest'
 import { todayKey, parseDueDate, humanDue, isOverdue, relativeUpdated } from '../lib/date'
 import { normalizeTask } from '../lib/storage'
 import { renderMarkdown, exportTaskMarkdown } from '../lib/markdown'
@@ -58,7 +58,7 @@ describe('toast', () => {
   beforeEach(() => { getToasts().slice().forEach(t=>dismissToast(t.id)) })
   it('dedupes same message', () => {
     const a = toast('hello')
-    const b = toast('hello')
+    toast('hello')
     expect(a).toBeDefined()
     expect(getToasts()).toHaveLength(1)
   })

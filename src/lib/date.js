@@ -10,12 +10,22 @@ export function todayKey(date = new Date()) {
   return `${y}-${m}-${d}`
 }
 
+// DST-safe: anchor at 12:00 to avoid midnight DST gaps
+export function todayKeyAtNoon(date = new Date()){
+  const d = new Date(date)
+  d.setHours(12,0,0,0)
+  return todayKey(d)
+}
+
 export function parseDueDate(input) {
   if (typeof input !== 'string' || !input.trim()) return null
   const results = chrono.parse(input.trim(), new Date(), { forwardDate: true })
   if (!results.length) return null
-  const d = results[0].start.date()
-  return todayKey(d)
+  // Use last result to match composer behavior (e.g., "meet tomorrow and fri" -> fri)
+  const d = results[results.length - 1].start.date()
+  const key = todayKey(d)
+  if (!isValidDateStr(key)) return null
+  return key
 }
 
 export function humanDue(key) {
@@ -25,10 +35,10 @@ export function humanDue(key) {
   if (key === today) return 'Today'
   if (key === tomorrow) return 'Tomorrow'
   const [y, m, d] = key.split('-').map(Number)
-  const date = new Date(y, m - 1, d)
+  const date = new Date(y, m - 1, d, 12, 0, 0)
   if (Number.isNaN(date.getTime())) return ''
   const [ty, tm, td] = today.split('-').map(Number)
-  const diff = Math.round((date.getTime() - new Date(ty, tm - 1, td).getTime()) / DAY_MS)
+  const diff = Math.round((date.getTime() - new Date(ty, tm - 1, td, 12,0,0).getTime()) / DAY_MS)
   const label = date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
   if (diff === -1) return `Yesterday · ${label}`
   if (diff < 0) return `Overdue · ${label}`
@@ -46,6 +56,14 @@ export function relativeUpdated(ts) {
   if (diff < 60000) return 'just now'
   if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`
   if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`
+  if (diff < 7*86400000) return `${Math.floor(diff/86400000)}d ago`
   const d = new Date(ts)
   return Number.isNaN(d.getTime()) ? '' : d.toLocaleDateString('en-US')
+}
+
+export function isValidDateStr(s){
+  if(!DATE_RE.test(s)) return false
+  const [y,m,d]=s.split('-').map(Number)
+  const dt=new Date(y,m-1,d,12,0,0)
+  return dt.getFullYear()===y && dt.getMonth()===m-1 && dt.getDate()===d
 }

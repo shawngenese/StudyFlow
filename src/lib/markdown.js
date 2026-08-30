@@ -1,14 +1,14 @@
 import { marked } from 'marked'
 import DOMPurify from 'dompurify'
 
-marked.use({ breaks: true, gfm: true })
+marked.use({ breaks: true, gfm: true, mangle: false, headerIds: false })
 
 function sanitize(html) {
   if (typeof window !== 'undefined' && window.DOMPurify) {
-    try { return window.DOMPurify.sanitize(html, { USE_PROFILES: { html: true }, FORBID_TAGS: ['style', 'animate', 'animateTransform', 'set'], FORBID_ATTR: ['style'] }) } catch { /* fallback */ }
+    try { return window.DOMPurify.sanitize(html, { USE_PROFILES: { html: true }, FORBID_TAGS: ['style', 'animate', 'animateTransform', 'set', 'script', 'iframe', 'object', 'embed'], FORBID_ATTR: ['style', 'onerror', 'onload'] }) } catch { /* fallback */ }
   }
   try {
-    return DOMPurify.sanitize(html, { USE_PROFILES: { html: true }, FORBID_TAGS: ['style', 'animate', 'animateTransform', 'set'], FORBID_ATTR: ['style'], ALLOW_DATA_ATTR: false })
+    return DOMPurify.sanitize(html, { USE_PROFILES: { html: true }, FORBID_TAGS: ['style', 'animate', 'animateTransform', 'set', 'script', 'iframe', 'object', 'embed'], FORBID_ATTR: ['style', 'onerror', 'onload'], ALLOW_DATA_ATTR: false })
       .replace(/src\s*=\s*["']\s*data:image\/svg\+xml[^"']*["']/gi, '')
   } catch {
     let out = html
@@ -28,17 +28,19 @@ function sanitize(html) {
 }
 
 export function renderMarkdown(text) {
-  let html = ''
+  let html
   try {
-    html = marked.parse(text || '')
+    const src = String(text || '').slice(0, 50000)
+    html = marked.parse(src)
   } catch {
-    html = `<p>${String(text || '').replace(/</g, '&lt;')}</p>`
+    html = `<p>${String(text || '').slice(0,5000).replace(/</g, '&lt;')}</p>`
   }
   return sanitize(html)
 }
 
 function sanitizeLine(s) {
-  return String(s).replace(/[\r\n]+/g, ' ').trim()
+  // eslint-disable-next-line no-useless-escape
+  return String(s).replace(/[\r\n]+/g, ' ').replace(/[#*_`\[\]]/g, '').trim().slice(0, 200)
 }
 
 export function exportTaskMarkdown(task, projectName) {
@@ -54,7 +56,7 @@ export function exportTaskMarkdown(task, projectName) {
   lines.push(meta.join(' · '))
   lines.push('')
   if (task.notes) {
-    lines.push(task.notes)
+    lines.push(String(task.notes).slice(0, 50000))
     lines.push('')
   }
   if (task.subtasks.length) {

@@ -13,7 +13,8 @@
 .tile-cal { grid-column: span 6 }
 .tile-courses { grid-column: span 6 }
 /* view tiles */
-.tile-composer { grid-column: span 12; display:flex; flex-direction:column; gap:12px; }
+.tile-composer { grid-column: span 12; display:flex; flex-direction:column; gap:0; padding:0 !important; overflow:hidden; }
+.tile-composer .toolbar { margin:0; padding:12px 16px; border-top:1px solid var(--border); background:rgba(255,255,255,0.01); }
 .tile-header { grid-column: span 12; background: transparent; border: none; box-shadow: none; padding: 6px 2px 2px; }
 .tile-header:hover { transform:none; box-shadow:none; border-color:transparent; }
 .tile-tasks { grid-column: span 8; min-width:0; }
@@ -44,8 +45,9 @@
   .bento{grid-template-columns:1fr; gap:16px;}
   .bento-edit-row{grid-column: span 1 !important;}
   .bento-tile{grid-column: span 1 !important; padding:16px; min-width: 0; overflow: hidden; }
-  .tile-composer .todo-input-row { flex-direction: column; }
-  .tile-composer .todo-input { width: 100%; }
+  .tile-composer .todo-input-row { flex-direction: row; gap:8px; }
+  .tile-composer .todo-input { width: auto; flex: 1; min-width: 0; }
+  .tile-composer .todo-add-btn { flex-shrink: 0; white-space: nowrap; }
   .tile-header { flex-direction: column; align-items: flex-start !important; }
   .tile-header .segmented { width: 100%; justify-content: flex-start; }
   .bento-tile.is-dragging { transform: none; opacity: 0.9; }

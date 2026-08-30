@@ -6,12 +6,14 @@
     "moduleResolution": "bundler",
     "allowJs": true,
     "jsx": "react-jsx",
-    "strict": false,
+    "strict": true,
     "noEmit": true,
-    "allowImportingTsExtensions": true,
+    "allowImportingTsExtensions": false,
     "skipLibCheck": true,
     "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true
+    "forceConsistentCasingInFileNames": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false
   },
   "include": ["src"]
 }
